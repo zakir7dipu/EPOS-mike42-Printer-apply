@@ -18,11 +18,10 @@ class PrinterController extends Controller
     {
         try {
             $printableData = json_decode(json_encode($request->print_data));
+//            return response()->json($printableData);
 
             $printer = $this->printReceipt($printableData);
 //            $printer = $this->test();
-
-
             return response()->json($printer);
         }catch (\Throwable $th){
             return response()->json($th->getMessage());
@@ -31,8 +30,20 @@ class PrinterController extends Controller
 
     public function printReceipt($printableData)
     {
-        $total = $printableData->payed_amount + $printableData->due_amount + $printableData->delivery_fee;
-        $total = $total - $printableData->discount_amount;
+//        $total = $printableData->payed_amount + $printableData->due_amount + $printableData->delivery_fee;
+//        $total = $total - $printableData->discount_amount;
+        $g_total = $printableData->amount + $printableData->delivery_fee;
+        $g_total = $g_total - $printableData->discount_amount;
+        $sub_total = $g_total;
+        if ($printableData->due > 0){
+            $sub_total = $sub_total + $printableData->due;
+        }
+
+        if ($printableData->adv > 0){
+            $sub_total = $sub_total - $printableData->adv;
+        }
+        $net_balance = $sub_total -  $printableData->payed_amount;
+
         try {
             $connector = new NetworkPrintConnector("192.168.31.140", 9100);
         } catch (\Exception $e) {
@@ -53,7 +64,13 @@ class PrinterController extends Controller
         $discountTotal = new RowItem('Discount', number_format($printableData->discount_amount,'2','.',','));
         $dueTotal = new RowItem('Due', number_format($printableData->due_amount,'2','.',','));
         $deliveryFeeTotal = new RowItem('Delivery Fee', $printableData->delivery_fee?number_format($printableData->delivery_fee,'2','.',','):'0.00');
-        $total = new RowItem('Total', number_format($total,'2','.',','));
+        $gTotal = new RowItem('Gross Total', number_format($g_total,'2','.',','));
+        $pDue = new RowItem('(+) Pre Due', number_format($printableData->due,'2','.',','));
+        $pAdv = new RowItem('(-) Pre Advance', number_format($printableData->adv,'2','.',','));
+        $total = new RowItem('Total', number_format(($sub_total),'2','.',','));
+        $payedAmount = new RowItem('(-) Payed Amount', number_format(($printableData->payed_amount),'2','.',','));
+        $netDue = new RowItem('Net Balance', number_format(($net_balance),'2','.',','));
+
         /* Date is kept the same for testing */
         $date = date('l jS \of F Y h:i:s A',time());
 
@@ -107,18 +124,33 @@ class PrinterController extends Controller
         $printer -> text($discountTotal);
         $printer -> text($deliveryFeeTotal);
         $printer -> setEmphasis(false);
-        $printer -> feed();
-
-        /* Tax and total */
-//        $printer -> text($tax);
-        $printer -> text($dueTotal);
+//        $printer -> feed();
+        /* Gross total */
         $printer -> text('------------------------------------------------');
-//        $printer -> selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
-        $printer -> setTextSize(1, 2);
-        $printer -> text($total);
+        $printer -> setTextSize(1, 1);
+        $printer -> text($gTotal);
         $printer -> setTextSize(1, 1);
         $printer -> text('------------------------------------------------');
+        /* Pervious due and Pervious advance total */
+        $printer -> setTextSize(1, 1);
+        $printer -> text($pDue);
+        $printer -> text($pAdv);
+        $printer -> setTextSize(1, 1);
+        $printer -> setEmphasis(false);
+//        $printer -> feed();
+
+        /*  total */
+//        $printer -> text($tax);
+//        $printer -> text($dueTotal);
+        $printer -> text('------------------------------------------------');
+//        $printer -> selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
+        $printer -> text($total);
+        $printer -> text($payedAmount);
+        $printer -> text('------------------------------------------------');
         $printer -> selectPrintMode();
+        $printer -> setTextSize(1, 2);
+        $printer -> text($netDue);
+        $printer -> setTextSize(1, 1);
 
         /* Footer */
         $printer -> feed(2);

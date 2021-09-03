@@ -85,6 +85,7 @@ peer.on('connection', function (msg){
     msg.on('data', function(data) {
         // receiptData = data;
         // console.log('Received', data);
+        // console.log(data['receipt_data']);
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -98,6 +99,8 @@ peer.on('connection', function (msg){
                 'print_data': data['receipt_data']
             },
             success:function (res){
+                console.log(res);
+                return
                 // console.log(res['message']);
                 printerReConnection(res, data.peer_id)
             }
