@@ -20,7 +20,12 @@ class PrinterController extends Controller
             $printableData = json_decode(json_encode($request->print_data));
 //            return response()->json($printableData);
 
-            $printer = $this->printReceipt($printableData);
+            if($printableData->status == 1){
+                $printer = $this->printReceipt($printableData);
+            }else{
+//                $printer = $this->printStatement($printableData);
+            }
+
 //            $printer = $this->test();
             return response()->json($printer);
         }catch (\Throwable $th){
@@ -90,7 +95,7 @@ class PrinterController extends Controller
         $printer -> text("F-55, Savar Bazar, Savar, Dhaka-1340\n");
         $printer -> selectPrintMode();
         $printer -> setEmphasis(true);
-        $printer -> text("Phone No. 01711234938, 01726059072 \n");
+        $printer -> text("Phone No. 01711234938, 01726059072, 01622065260 \n");
         $printer -> feed();
         $printer -> text("Order No.".$printableData->invoice_no." \n");
         $printer -> feed();
@@ -173,6 +178,39 @@ class PrinterController extends Controller
             'alert_type' => 'success'
         );
         return $notification;
+    }
+
+    public function printStatement($printableData)
+    {
+        try {
+            $connector = new NetworkPrintConnector("192.168.31.140", 9100);
+        } catch (\Exception $e) {
+            $notification = array(
+                'message' => 'Sorry! Printer is not connected in this network......',
+                'alert_type' => 'error'
+            );
+            return $notification;
+        }
+
+        /* Start the printer */
+        $printer = new Printer($connector);
+        /* Print top logo */
+
+        /* Name of shop */
+
+//        $printer -> selectPrintMode(Printer::MODE_FONT_B);
+        $printer -> selectPrintMode();
+        $printer -> setJustification(Printer::JUSTIFY_CENTER);
+        $printer -> setTextSize(2, 2);
+        $printer -> text("M/S.Ahmed&Sons.\n");
+        $printer -> setTextSize(1, 1);
+        $printer -> text("F-55, Savar Bazar, Savar, Dhaka-1340\n");
+        $printer -> selectPrintMode();
+        $printer -> setEmphasis(true);
+        $printer -> text("Phone No. 01711234938, 01726059072, 01622065260 \n");
+        $printer -> feed();
+
+
     }
 
     /**

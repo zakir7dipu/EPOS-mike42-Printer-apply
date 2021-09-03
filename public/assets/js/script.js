@@ -99,8 +99,6 @@ peer.on('connection', function (msg){
                 'print_data': data['receipt_data']
             },
             success:function (res){
-                console.log(res);
-                return
                 // console.log(res['message']);
                 printerReConnection(res, data.peer_id)
             }
