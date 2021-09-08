@@ -37,7 +37,7 @@ class PrinterController extends Controller
     {
 //        $total = $printableData->payed_amount + $printableData->due_amount + $printableData->delivery_fee;
 //        $total = $total - $printableData->discount_amount;
-        $g_total = $printableData->amount + $printableData->delivery_fee;
+        $g_total = $printableData->amount;
         $g_total = $g_total - $printableData->discount_amount;
         $sub_total = $g_total;
         if ($printableData->due > 0){
